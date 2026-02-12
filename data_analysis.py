@@ -8,13 +8,16 @@ df = pd.read_csv('All_Diets.csv')
 # Handle missing data
 df.fillna(df.mean(numeric_only=True), inplace=True)
 
-# alculate average macronutrients per diet type
+# Calculate average macronutrients per diet type
 avg_macros = df.groupby('Diet_type')[['Protein(g)','Carbs(g)','Fat(g)']].mean()
 print("Average Macros per Diet Type:\n", avg_macros)
 
 # Top 5 protein-rich recipes per diet type
 top_protein = df.sort_values('Protein(g)', ascending=False).groupby('Diet_type').head(5)
 print("\nTop 5 Protein Recipes per Diet Type:\n", top_protein[['Diet_type','Recipe_name','Protein(g)']])
+
+# Find the diet type with the highest protein content
+print("Highest Protein Diet:", avg_macros['Protein(g)'].idxmax())
 
 #Protein-to-Carbs and Carbs-to-Fat ratios
 df['Protein_to_Carbs_ratio'] = df['Protein(g)'] / df['Carbs(g)']
@@ -45,7 +48,7 @@ plt.savefig('avg_carbs_fat.png')
 plt.show()
 
 # Scatter plot: Top protein recipes
-sns.scatterplot(data=top_protein, x='Recipe_name', y='Protein(g)', hue='Diet_type')
+sns.scatterplot(data=top_protein, x='Cuisine_type', y='Protein(g)', hue='Diet_type')
 plt.xticks(rotation=90)
 plt.title('Top 5 Protein Recipes per Diet Type')
 plt.tight_layout()
