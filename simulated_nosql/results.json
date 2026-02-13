@@ -1,0 +1,39 @@
+{
+  "generated_at_utc": "2026-02-13T04:12:33.765435Z",
+  "source": {
+    "container": "datasets",
+    "blob": "All_Diets.csv"
+  },
+  "avg_macros_by_diet": [
+    {
+      "Diet_type": "dash",
+      "Protein(g)": 69.28227507163324,
+      "Carbs(g)": 160.5357535816619,
+      "Fat(g)": 101.15056160458454
+    },
+    {
+      "Diet_type": "keto",
+      "Protein(g)": 101.26650793650794,
+      "Carbs(g)": 57.970575396825396,
+      "Fat(g)": 153.1163558201058
+    },
+    {
+      "Diet_type": "mediterranean",
+      "Protein(g)": 101.11231602966345,
+      "Carbs(g)": 152.9055447803765,
+      "Fat(g)": 101.41613804905874
+    },
+    {
+      "Diet_type": "paleo",
+      "Protein(g)": 88.67476452119308,
+      "Carbs(g)": 129.55212715855572,
+      "Fat(g)": 135.66902668759812
+    },
+    {
+      "Diet_type": "vegan",
+      "Protein(g)": 56.15703022339028,
+      "Carbs(g)": 254.00419185282524,
+      "Fat(g)": 103.29967805519053
+    }
+  ]
+}
