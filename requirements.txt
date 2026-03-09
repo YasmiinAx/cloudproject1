@@ -1,4 +1,6 @@
 pandas
 matplotlib
 seaborn
-
+flask
+flask-cors
+scikit-learn
