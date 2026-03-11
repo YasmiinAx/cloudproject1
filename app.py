@@ -17,8 +17,8 @@ from sklearn.cluster import KMeans
 app = Flask(__name__)
 CORS(app) # Enable CORS for all routes
 
-# Replace with the actual path to the dataset (REQUIRED BY MEMBER 3.)
-DATA_SOURCE = "All_Diets.csv" 
+# Data source provided by Member 3 (Azure Blob Storage)
+DATA_SOURCE = "https://dietanalysiscpsy.blob.core.windows.net/datasets/All_Diets.csv" 
 
 def load_data():
     df = pd.read_csv(DATA_SOURCE)
