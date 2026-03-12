@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nutritional Insights</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #e8e8e8;
+      color: #333;
+      font-size: 14px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-header {
+      background: #3a5bd9;
+      color: white;
+      padding: 14px 24px;
+      font-size: 1rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .page-body {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .card {
+      background: #f9f9f9;
+      border: 1px solid #d0d0d0;
+      border-radius: 4px;
+      padding: 20px 20px 28px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .section-label {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #222;
+      margin-bottom: 14px;
+    }
+
+    .charts-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .chart-card {
+      background: #fff;
+      border: 1px solid #d0d0d0;
+      border-radius: 3px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .chart-card .ct { font-size: 0.82rem; font-weight: bold; color: #222; margin-bottom: 2px; }
+    .chart-card .cs { font-size: 0.72rem; color: #555; line-height: 1.35; margin-bottom: 8px; }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 220px;
+    }
+
+    .filters-block { margin-bottom: 18px; }
+    .filters-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    input.search-box {
+      padding: 5px 9px;
+      border: 1px solid #bbb;
+      border-radius: 3px;
+      font-size: 0.82rem;
+      color: #333;
+      width: 160px;
+      outline: none;
+    }
+    input.search-box:focus { border-color: #3a5bd9; }
+
+    select.diet-drop {
+      padding: 5px 8px;
+      border: 1px solid #bbb;
+      border-radius: 3px;
+      font-size: 0.82rem;
+      color: #333;
+      background: #fff;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .api-block { margin-bottom: 20px; }
+    .api-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .btn {
+      padding: 7px 15px;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-weight: bold;
+      cursor: pointer;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+    .btn-blue   { background: #3a5bd9; } .btn-blue:hover   { background: #2e4ab5; }
+    .btn-green  { background: #28a745; } .btn-green:hover  { background: #218838; }
+    .btn-purple { background: #7b2fbe; } .btn-purple:hover { background: #6624a2; }
+
+    .api-response {
+      display: none;
+      margin-top: 8px;
+      background: #f0f4ff;
+      border: 1px solid #c7d4ff;
+      border-radius: 3px;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      color: #1e3a8a;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .api-response.show { display: block; }
+    .api-response pre { font-family: monospace; white-space: pre-wrap; }
+
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 10px; }
+
+    .pg-btn {
+      min-width: 34px; height: 28px; padding: 0 8px;
+      border: 1px solid #bbb; background: #fff;
+      border-radius: 3px; font-size: 0.8rem;
+      cursor: pointer; display: inline-flex;
+      align-items: center; justify-content: center;
+      color: #333; font-family: Arial, sans-serif;
+    }
+    .pg-btn.active { background: #3a5bd9; color: #fff; border-color: #3a5bd9; }
+    .pg-btn:hover:not(.active) { background: #eef; }
+
+    footer {
+      background: #3a5bd9;
+      color: #fff;
+      text-align: center;
+      padding: 14px;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-header">Nutritional Insights</div>
+
+<div class="page-body">
+  <div class="card">
+
+    <div class="section-label">Explore Nutritional Insights</div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="ct">Bar Chart</div>
+        <div class="cs">Average macronutrient content by diet type.</div>
+        <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="ct">Scatter Plot</div>
+        <div class="cs">Nutrient relationships (e.g., protein vs carbs).</div>
+        <div class="chart-wrap"><canvas id="scatterChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="ct">Heatmap</div>
+        <div class="cs">Nutrient correlations.</div>
+        <div class="chart-wrap"><canvas id="heatmapChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="ct">Pie Chart</div>
+        <div class="cs">Recipe distribution by diet type.</div>
+        <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="filters-block">
+      <div class="section-label">Filters and Data Interaction</div>
+      <div class="filters-row">
+        <input class="search-box" type="text" id="searchInput" placeholder="Search by Diet Type" oninput="filterChange('search')"/>
+        <select class="diet-drop" id="dietSelect" onchange="filterChange('drop')">
+          <option value="All">All Diet Types ▾</option>
+          <option value="Paleo">Paleo</option>
+          <option value="Vegan">Vegan</option>
+          <option value="Keto">Keto</option>
+          <option value="Mediterranean">Mediterranean</option>
+          <option value="Dash">Dash</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="api-block">
+      <div class="section-label">API Data Interaction</div>
+      <div class="api-buttons">
+        <button class="btn btn-blue"   onclick="callAPI('insights')">Get Nutritional Insights</button>
+        <button class="btn btn-green"  onclick="callAPI('recipes')">Get Recipes</button>
+        <button class="btn btn-purple" onclick="callAPI('clusters')">Get Clusters</button>
+      </div>
+      <div class="api-response" id="apiResponse">
+        <pre id="apiResponseText"></pre>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Pagination</div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+  </div>
+</div>
+
+<footer>© 2025 Nutritional Insights. All Rights Reserved.</footer>
+
+<script>
+const API_BASE   = "http://localhost:5000";
+const DIET_TYPES = ["Paleo","Vegan","Keto","Mediterranean","Dash"];
+const COLORS     = ["#4472c4","#70ad47","#ffc000","#9b59b6","#e74c3c"];
+
+let insightsCache = null; 
+let recipesCache  = {}; 
+let clustersCache = null;
+let lastAPIType   = null; 
+
+let currentFullData = []; 
+let currentPage = 1;
+const ITEMS_PER_PAGE = 5; 
+
+let barInst, scatterInst, heatInst, pieInst;
+
+const CHART_DEFAULTS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: false,
+  plugins: { legend: { labels: { font:{size:9}, boxWidth:9, padding:5 } } },
+};
+
+function showError(msg) {
+  document.getElementById("apiResponseText").textContent = msg;
+  document.getElementById("apiResponse").classList.add("show");
+}
+
+async function fetchJSON(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null; 
+    return await res.json();
+  } catch (e) {
+    throw new Error(`Connection Error: Check if Flask is running at ${API_BASE}`);
+  }
+}
+
+async function getInsights() {
+  if (!insightsCache) insightsCache = await fetchJSON(`${API_BASE}/api/insights`);
+  return insightsCache;
+}
+
+async function getRecipes(diet = "All") {
+  if (!recipesCache[diet]) {
+    const qs = (diet && diet !== "All") ? `?diet=${encodeURIComponent(diet)}` : "";
+    recipesCache[diet] = await fetchJSON(`${API_BASE}/api/recipes${qs}`);
+  }
+  return recipesCache[diet];
+}
+
+async function getClusters() {
+  if (!clustersCache) clustersCache = await fetchJSON(`${API_BASE}/api/clusters`);
+  return clustersCache;
+}
+
+function buildBar(insightsData, filter = "All") {
+  if (!insightsData) return;
+  const rows = filter === "All" ? insightsData : insightsData.filter(r => r.Diet_type.toLowerCase() === filter.toLowerCase());
+  const labels = rows.map(r => r.Diet_type);
+  if (barInst) barInst.destroy();
+  barInst = new Chart(document.getElementById("barChart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label:"Protein", data:rows.map(r => +r["Protein(g)"].toFixed(1)), backgroundColor:"#4472c4", borderRadius:2 },
+        { label:"Carbs",   data:rows.map(r => +r["Carbs(g)"].toFixed(1)),   backgroundColor:"#ffc000", borderRadius:2 },
+        { label:"Fat",     data:rows.map(r => +r["Fat(g)"].toFixed(1)),     backgroundColor:"#70ad47", borderRadius:2 },
+      ]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      scales: {
+        x: { ticks:{font:{size:8}, maxRotation:45}, grid:{display:false} },
+        y: { ticks:{font:{size:8}}, grid:{color:"#eee"} }
+      }
+    }
+  });
+}
+
+function buildScatter(recipesData) {
+  if (!recipesData) return;
+  const byDiet = {};
+  recipesData.forEach(r => {
+    if (!byDiet[r.Diet_type]) byDiet[r.Diet_type] = [];
+    byDiet[r.Diet_type].push({ x: +r["Protein(g)"], y: +r["Carbs(g)"] });
+  });
+  const diets = Object.keys(byDiet);
+  if (scatterInst) scatterInst.destroy();
+  scatterInst = new Chart(document.getElementById("scatterChart"), {
+    type: "scatter",
+    data: {
+      datasets: diets.map(d => ({
+        label: d,
+        data:  byDiet[d],
+        backgroundColor: COLORS[DIET_TYPES.map(t=>t.toLowerCase()).indexOf(d.toLowerCase()) % COLORS.length] + "aa",
+        pointRadius: 4,
+      }))
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      scales: {
+        x: { title:{display:true,text:"Protein (g)",font:{size:8}}, ticks:{font:{size:8}}, grid:{color:"#eee"} },
+        y: { title:{display:true,text:"Carbs (g)",  font:{size:8}}, ticks:{font:{size:8}}, grid:{color:"#eee"} }
+      }
+    }
+  });
+}
+
+function buildHeatmap(recipesData) {
+  if (!recipesData || recipesData.length === 0) return;
+  const p = recipesData.map(r => +r["Protein(g)"]), c = recipesData.map(r => +r["Carbs(g)"]), f = recipesData.map(r => +r["Fat(g)"]);
+  const corr = (a, b) => {
+    const n = a.length;
+    if (n < 2) return 0;
+    const muA = a.reduce((s,v)=>s+v,0)/n, muB = b.reduce((s,v)=>s+v,0)/n;
+    const num = a.reduce((s,v,i)=>s+(v-muA)*(b[i]-muB),0);
+    const den = Math.sqrt(a.reduce((s,v)=>s+(v-muA)**2,0)) * Math.sqrt(b.reduce((s,v)=>s+(v-muB)**2,0));
+    return den !== 0 ? +(num/den).toFixed(2) : 0;
+  };
+  if (heatInst) heatInst.destroy();
+  heatInst = new Chart(document.getElementById("heatmapChart"), {
+    type: "bar",
+    data: {
+      labels: ["Prot/Carb", "Prot/Fat", "Carb/Fat"],
+      datasets: [{ label: "Correlation", data: [corr(p,c), corr(p,f), corr(c,f)], backgroundColor: "#9b59b6cc" }]
+    },
+    options: { ...CHART_DEFAULTS, scales: { y: { min: -1, max: 1, ticks:{font:{size:8}} } } }
+  });
+}
+
+function buildPie(recipesData, filter = "All") {
+  if (!recipesData) return;
+  const counts = {};
+  recipesData.forEach(r => { counts[r.Diet_type] = (counts[r.Diet_type]||0) + 1; });
+  const labels = Object.keys(counts);
+  if (pieInst) pieInst.destroy();
+  pieInst = new Chart(document.getElementById("pieChart"), {
+    type: "doughnut",
+    data: {
+      labels,
+      datasets: [{
+        data: labels.map(d => counts[d]),
+        backgroundColor: labels.map(d => COLORS[DIET_TYPES.map(t=>t.toLowerCase()).indexOf(d.toLowerCase()) % COLORS.length]),
+        borderWidth:1, borderColor:"#fff"
+      }]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      plugins: { legend:{ position:"bottom", labels:{ font:{size:9}, boxWidth:9, padding:4 } } },
+      cutout: "45%"
+    }
+  });
+}
+
+async function refreshCharts(filter = "All") {
+  try {
+    const [insights, recipes] = await Promise.all([getInsights(), getRecipes(filter)]);
+    if (insights) buildBar(insights, filter);
+    if (recipes) {
+      buildScatter(recipes);
+      buildHeatmap(recipes);
+      buildPie(recipes, filter);
+    }
+    if (lastAPIType) {
+        callAPI(lastAPIType, true);
+    }
+  } catch(e) {
+    showError(e.message);
+  }
+}
+
+function filterChange(source) {
+  const sInput = document.getElementById("searchInput");
+  const dSelect = document.getElementById("dietSelect");
+  let filter;
+  if (source === 'search') {
+    dSelect.value = "All";
+    filter = sInput.value.trim();
+  } else {
+    sInput.value = "";
+    filter = dSelect.value;
+  }
+  currentPage = 1; 
+  refreshCharts(filter || "All");
+}
+
+function goPage(p) {
+  const totalPages = Math.ceil(currentFullData.length / ITEMS_PER_PAGE) || 1;
+  if (p < 1 || p > totalPages) return;
+  currentPage = p;
+  updateAPIResponseDisplay();
+  renderPagination();
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(currentFullData.length / ITEMS_PER_PAGE) || 1;
+  let h = `<button class="pg-btn" onclick="goPage(${currentPage-1})">Previous</button>`;
+  for (let p = 1; p <= totalPages; p++) {
+    if (p > 10) break; 
+    h += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  }
+  h += `<button class="pg-btn" onclick="goPage(${currentPage+1})">Next</button>`;
+  document.getElementById("pagination").innerHTML = h;
+}
+
+function updateAPIResponseDisplay() {
+  const tx = document.getElementById("apiResponseText");
+  const start = (currentPage - 1) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
+  const pageData = Array.isArray(currentFullData) ? currentFullData.slice(start, end) : currentFullData;
+  
+  tx.textContent = `[Page ${currentPage}]\n\n` + JSON.stringify(pageData, null, 2);
+}
+
+async function callAPI(type, isAutoUpdate = false) {
+  const el = document.getElementById("apiResponse");
+  const tx = document.getElementById("apiResponseText");
+  
+  lastAPIType = type; 
+
+  if (!isAutoUpdate) {
+      tx.textContent = "Loading…";
+      el.classList.add("show");
+      currentPage = 1; 
+  }
+  
+  const sInput = document.getElementById("searchInput");
+  const dSelect = document.getElementById("dietSelect");
+  const currentFilter = sInput.value.trim() || dSelect.value;
+
+  try {
+    const qs = (currentFilter && currentFilter !== "All") ? `?diet=${encodeURIComponent(currentFilter)}` : "";
+    const data = await fetchJSON(`${API_BASE}/api/${type}${qs}`);
+    if (data) {
+        currentFullData = data;
+        updateAPIResponseDisplay();
+        renderPagination();
+    } else {
+        tx.textContent = "No data found for this filter.";
+        currentFullData = [];
+        renderPagination();
+    }
+  } catch(e) {
+    tx.textContent = e.message;
+  }
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  refreshCharts();
+});
+</script>
+</body>
+</html>
