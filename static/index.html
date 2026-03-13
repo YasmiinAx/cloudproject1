@@ -201,8 +201,8 @@
     <div class="filters-block">
       <div class="section-label">Filters and Data Interaction</div>
       <div class="filters-row">
-        <input class="search-box" type="text" id="searchInput" placeholder="Search by Diet Type" oninput="filterChange()"/>
-        <select class="diet-drop" id="dietSelect" onchange="filterChange()">
+        <input class="search-box" type="text" id="searchInput" placeholder="Search by Diet Type" oninput="filterChange('search')"/>
+        <select class="diet-drop" id="dietSelect" onchange="filterChange('drop')">
           <option value="All">All Diet Types ▾</option>
           <option value="Paleo">Paleo</option>
           <option value="Vegan">Vegan</option>
@@ -532,9 +532,23 @@ async function refreshCharts(filter = "All") {
   }
 }
 
-function filterChange() {
-  const f = document.getElementById("dietSelect").value;
-  refreshCharts(f);
+function filterChange(source) {
+  const searchBox = document.getElementById("searchInput");
+  const dropdown = document.getElementById("dietSelect");
+
+  let filter;
+  if (source === "search") {
+    // Typing in the search box — find the closest matching diet type
+    const typed = searchBox.value.trim().toLowerCase();
+    dropdown.value = "All";
+    const match = DIET_TYPES.find(d => d.toLowerCase().startsWith(typed));
+    filter = match || "All";
+  } else {
+    // Dropdown changed — clear search box
+    searchBox.value = "";
+    filter = dropdown.value;
+  }
+  refreshCharts(filter);
 }
 
 </script>
