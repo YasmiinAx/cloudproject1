@@ -6,6 +6,9 @@
   <title>Nutritional Insights</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
+    /* Main Dashboard Styling 
+       Uses a sidebar-less, card-based layout for data visualization 
+    */
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -119,20 +122,39 @@
     .btn-green  { background: #28a745; } .btn-green:hover  { background: #218838; }
     .btn-purple { background: #7b2fbe; } .btn-purple:hover { background: #6624a2; }
 
+    /* Updated Table Styling to match provided image */
     .api-response {
       display: none;
       margin-top: 8px;
       background: #f0f4ff;
       border: 1px solid #c7d4ff;
       border-radius: 3px;
-      padding: 8px 12px;
+      padding: 0;
       font-size: 0.75rem;
-      color: #1e3a8a;
-      max-height: 200px;
+      color: #333;
+      max-height: 350px;
       overflow-y: auto;
     }
     .api-response.show { display: block; }
-    .api-response pre { font-family: monospace; white-space: pre-wrap; }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+    .data-table th {
+      background: #3a5bd9;
+      color: #fff;
+      text-align: left;
+      padding: 10px;
+      position: sticky;
+      top: 0;
+    }
+    .data-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .data-table tr:nth-child(even) { background: #f9f9f9; }
 
     .pagination { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 10px; }
 
@@ -194,7 +216,7 @@
       <div class="filters-row">
         <input class="search-box" type="text" id="searchInput" placeholder="Search by Diet Type" oninput="filterChange('search')"/>
         <select class="diet-drop" id="dietSelect" onchange="filterChange('drop')">
-          <option value="All">All Diet Types ▾</option>
+          <option value="All">All Diet Types</option>
           <option value="Paleo">Paleo</option>
           <option value="Vegan">Vegan</option>
           <option value="Keto">Keto</option>
@@ -212,7 +234,7 @@
         <button class="btn btn-purple" onclick="callAPI('clusters')">Get Clusters</button>
       </div>
       <div class="api-response" id="apiResponse">
-        <pre id="apiResponseText"></pre>
+        <div id="apiResponseContent"></div>
       </div>
     </div>
 
@@ -227,6 +249,11 @@
 <footer>© 2025 Nutritional Insights. All Rights Reserved.</footer>
 
 <script>
+/**
+ * Frontend logic for Diet Analysis Dashboard
+ * Handles Chart.js lifecycle, API requests, and pagination state.
+ */
+
 const API_BASE   = "http://localhost:5000";
 const DIET_TYPES = ["Paleo","Vegan","Keto","Mediterranean","Dash"];
 const COLORS     = ["#4472c4","#70ad47","#ffc000","#9b59b6","#e74c3c"];
@@ -238,7 +265,7 @@ let lastAPIType   = null;
 
 let currentFullData = []; 
 let currentPage = 1;
-const ITEMS_PER_PAGE = 5; 
+const ITEMS_PER_PAGE = 10; // Adjusted for better table viewing
 
 let barInst, scatterInst, heatInst, pieInst;
 
@@ -250,7 +277,7 @@ const CHART_DEFAULTS = {
 };
 
 function showError(msg) {
-  document.getElementById("apiResponseText").textContent = msg;
+  document.getElementById("apiResponseContent").textContent = msg;
   document.getElementById("apiResponse").classList.add("show");
 }
 
@@ -433,23 +460,49 @@ function renderPagination() {
   document.getElementById("pagination").innerHTML = h;
 }
 
+/**
+ * UPDATED: Renders data as a Table matching the user-provided screenshot
+ */
 function updateAPIResponseDisplay() {
-  const tx = document.getElementById("apiResponseText");
+  const container = document.getElementById("apiResponseContent");
   const start = (currentPage - 1) * ITEMS_PER_PAGE;
   const end = start + ITEMS_PER_PAGE;
   const pageData = Array.isArray(currentFullData) ? currentFullData.slice(start, end) : currentFullData;
   
-  tx.textContent = `[Page ${currentPage}]\n\n` + JSON.stringify(pageData, null, 2);
+  if (!Array.isArray(pageData) || pageData.length === 0) {
+    container.innerHTML = `<pre style="padding:10px">${JSON.stringify(pageData, null, 2)}</pre>`;
+    return;
+  }
+
+  // Define headers based on data keys
+  const keys = Object.keys(pageData[0]);
+  
+  let tableHTML = `<table class="data-table"><thead><tr>`;
+  keys.forEach(k => tableHTML += `<th>${k}</th>`);
+  tableHTML += `</tr></thead><tbody>`;
+
+  pageData.forEach(row => {
+    tableHTML += `<tr>`;
+    keys.forEach(k => {
+      let val = row[k];
+      if (typeof val === 'number' && !Number.isInteger(val)) val = val.toFixed(2);
+      tableHTML += `<td>${val}</td>`;
+    });
+    tableHTML += `</tr>`;
+  });
+
+  tableHTML += `</tbody></table>`;
+  container.innerHTML = tableHTML;
 }
 
 async function callAPI(type, isAutoUpdate = false) {
   const el = document.getElementById("apiResponse");
-  const tx = document.getElementById("apiResponseText");
+  const container = document.getElementById("apiResponseContent");
   
   lastAPIType = type; 
 
   if (!isAutoUpdate) {
-      tx.textContent = "Loading…";
+      container.textContent = "Loading…";
       el.classList.add("show");
       currentPage = 1; 
   }
@@ -466,12 +519,12 @@ async function callAPI(type, isAutoUpdate = false) {
         updateAPIResponseDisplay();
         renderPagination();
     } else {
-        tx.textContent = "No data found for this filter.";
+        container.textContent = "No data found for this filter.";
         currentFullData = [];
         renderPagination();
     }
   } catch(e) {
-    tx.textContent = e.message;
+    container.textContent = e.message;
   }
 }
 
