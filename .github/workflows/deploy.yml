@@ -54,10 +54,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     steps:
-      - name: Trigger Azure App Service deployment
+      - name: Notify deployment
         run: |
-          curl -s -X POST "${{ secrets.AZURE_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d '{}' \
-            --fail --show-error
-          echo "Deployment triggered — Azure will pull the latest image from ACR"
+          echo "Image pushed to ACR successfully."
+          echo "Azure App Service will auto-deploy via ACR webhook."
+          echo "Image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest"
