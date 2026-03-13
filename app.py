@@ -11,12 +11,13 @@ This is a simple Flask backend for a diet recipe application. It provides three 
    macros and returns the cluster assignments to show in the "Clusters" section of the UI.
 '''
 
-from flask import Flask, jsonify, request
+import os
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import pandas as pd
 from sklearn.cluster import KMeans
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 CORS(app) # Enable CORS for all routes
 
 # Data source provided by Member 3 (Azure Blob Storage)
@@ -34,6 +35,10 @@ except Exception as e:
 def load_data():
     # Returns a fresh copy of the global dataframe to prevent accidental mutation
     return df_global.copy()
+
+@app.route('/')
+def serve_frontend():
+    return send_from_directory('static', 'index.html')
 
 '''
 Endpoint: /api/insights
@@ -92,4 +97,5 @@ def get_clusters():
     return jsonify(df[['Recipe_name','Diet_type','cluster']].sample(num_samples, random_state=42).to_dict(orient='records'))
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
