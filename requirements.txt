@@ -4,3 +4,4 @@ seaborn
 flask
 flask-cors
 scikit-learn
+PyJWT
