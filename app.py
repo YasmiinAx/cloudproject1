@@ -225,7 +225,7 @@ CLOUD_RESOURCES = [
 # ACR configuration (injected by Azure App Service as env vars)
 ACR_REGISTRY = os.environ.get("DOCKER_REGISTRY_SERVER_URL", "https://nutritionalinsightscr.azurecr.io").rstrip("/")
 ACR_USERNAME = os.environ.get("DOCKER_REGISTRY_SERVER_USERNAME", "nutritionalinsightscr")
-ACR_PASSWORD = os.environ.get("DOCKER_REGISTRY_SERVER_PASSWORD", "")
+ACR_PASSWORD = os.environ.get("ACR_CLEANUP_PASSWORD", os.environ.get("DOCKER_REGISTRY_SERVER_PASSWORD", ""))
 ACR_IMAGE_NAME = "nutritional-insights"
 
 # Tags that must NEVER be deleted
